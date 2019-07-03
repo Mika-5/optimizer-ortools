@@ -228,6 +228,18 @@ public:
     return tsptw_clients_[i.value()].vehicle_indices;
   }
 
+  std::vector<int64> TwRestStart() const {
+    return twreststart_;
+  }
+
+  std::vector<int64> TwRestEnd() const {
+    return twrestend_;
+  }
+
+  std::vector<int64> RestDuration() const {
+    return rest_duration_;
+  }
+
   int32 TimeWindowsSize(int i) const { return tws_size_.at(i); }
 
   int32 Size() const { return size_; }
@@ -277,6 +289,7 @@ public:
         , value_matrix_index(0)
         , vehicle_indices(0)
         , capacity(0)
+        , rests(0)
         , overload_multiplier(0)
         , break_size(0)
         , time_start(0)
@@ -522,6 +535,7 @@ public:
     int64 value_matrix_index;
     std::vector<int64> vehicle_indices;
     std::vector<int64> capacity;
+    std::vector<int64> rests;
     std::vector<bool> counting;
     std::vector<int64> overload_multiplier;
     int32 break_size;
@@ -729,6 +743,9 @@ private:
   std::map<std::string, int64> ids_map_;
   std::map<std::string, int64> vehicle_ids_map_;
   std::map<int64, int64> day_index_to_vehicle_index_;
+  std::vector<int64> twreststart_;
+  std::vector<int64> twrestend_;
+  std::vector<int64> rest_duration_;
 };
 
 void TSPTWDataDT::LoadInstance(const std::string& filename) {
@@ -1006,7 +1023,11 @@ void TSPTWDataDT::LoadInstance(const std::string& filename) {
       std::vector<int64> ready_time;
       std::vector<int64> due_time;
 
+      rest_duration_.push_back(rest.duration());
+
       for (const ortools_vrp::TimeWindow* timewindow : timewindows) {
+        timewindow->start() > -CUSTOM_MAX_INT ? twreststart_.push_back(timewindow->start()) : ready_time.push_back(-CUSTOM_MAX_INT);
+        timewindow->end() < CUSTOM_MAX_INT ? twrestend_.push_back(timewindow->end()) : due_time.push_back(CUSTOM_MAX_INT);
         timewindow->start() > -CUSTOM_MAX_INT ? ready_time.push_back(timewindow->start())
                                               : ready_time.push_back(-CUSTOM_MAX_INT);
         timewindow->end() < CUSTOM_MAX_INT ? due_time.push_back(timewindow->end())

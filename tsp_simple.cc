@@ -526,6 +526,9 @@ int TSPTWSolver(const TSPTWDataDT& data, std::string filename) {
   const int size_matrix     = data.SizeMatrix();
   const int size_rest       = data.SizeRest();
   const int size_mtws       = data.TwiceTWsCounter();
+  std::vector<int64> rest_tw_start = data.TwRestStart();
+  std::vector<int64> rest_tw_end = data.TwRestEnd();
+  std::vector<int64> rest_duration = data.RestDuration();
   bool has_lateness         = false;
   bool has_route_duration   = false;
   bool has_overall_duration = false;
@@ -806,6 +809,27 @@ int TSPTWSolver(const TSPTWDataDT& data, std::string filename) {
         }
       }
     }
+
+    for (int i = 0; i < vehicle->break_size; i++) { /* FAUX */
+      i = 0;
+      RoutingDimension* const time_dimension =
+      routing.GetMutableDimension("time");
+
+      const std::vector<std::vector<int>> break_data = {
+        {int( solver->MakeSum(time_cumul_var, rest_tw_start[i])->Min() ), int( solver->MakeSum(time_cumul_var, rest_tw_end[i])->Min() ), rest_duration[i]}};
+
+      std::vector<IntervalVar*> breaks;
+      for (int i = 0; i<break_data.size(); i++) {
+        IntervalVar* const break_interval = solver->MakeFixedDurationIntervalVar(break_data[i][0], break_data[i][1], break_data[i][2], false, "Pause");
+        breaks.push_back(break_interval);
+      }
+      rest_tw_start.erase(rest_tw_start.begin());
+      rest_tw_end.erase (rest_tw_end.begin());
+      rest_duration.erase (rest_duration.begin());
+
+      time_dimension->SetBreakIntervalsOfVehicle(std::move(breaks), int64(v));
+    }
+
     ++v;
   }
 
