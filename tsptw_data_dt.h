@@ -489,7 +489,7 @@ public:
 
     int64 ValuePlusServiceValue(RoutingIndexManager::NodeIndex from,
                                 RoutingIndexManager::NodeIndex to) const {
-      return Time(from, to) + data->ServiceValue(from);
+      return Value(from, to) + data->ServiceValue(from);
     }
 
     int64 TimePlus(RoutingIndexManager::NodeIndex from,
